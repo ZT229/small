@@ -2,11 +2,11 @@ name: Update Branch with Upstream Changes
 
 on:
   schedule:
-    - cron: "0 2 * * *"  # 每天上午 02:00
+    - cron: "0 2 * * *"  # 每天上午 02:00 自动运行
   push:
     branches:
       - master  # 当你向 master 分支推送时触发
-  workflow_dispatch:  # 允许手动触发工作流    
+  workflow_dispatch:  # 手动触发工作流    
 
 jobs:
   update:
@@ -26,7 +26,7 @@ jobs:
       - name: Add Upstream Remote
         run: |
           if ! git remote get-url upstream; then
-            git remote add upstream https://github.com/kenzok8/small.git  # 替换为原始仓库的 URL
+            git remote add upstream https://github.com/kenzok8/small.git  # 替换为上游仓库的 URL
           fi
 
       - name: Fetch Upstream Changes
@@ -34,14 +34,32 @@ jobs:
 
       - name: Merge Upstream Changes into Your Branch
         run: |
-          git checkout self  # 替换为你的新分支名称
+          git checkout self  # 替换为你的分支名称
           git merge upstream/master || {
             echo "合并过程中出现冲突，请手动解决。"
             exit 1
           }
 
+      - name: Update Cloned Sub-repository
+        run: |
+          # 检查子仓库是否已存在 .git 信息
+          if [ -d "luci-app-daed/.git" ]; then
+            echo "正在更新子仓库 luci-app-daed..."
+            cd luci-app-daed
+            git pull origin master || {
+              echo "子仓库更新失败，请检查。"
+              exit 1
+            }
+            cd -
+          else
+            echo "子仓库不存在或未初始化，开始克隆..."
+            git clone https://github.com/QiuSimons/luci-app-daed.git
+          fi
+
       - name: Push Changes
         run: |
-          git push origin self  # 推送到你的新分支
+          git add -A
+          git commit -m "更新主仓库及子仓库 luci-app-daed"
+          git push origin self  # 推送到你的分支
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 使用 GitHub 提供的 token 进行身份验证
