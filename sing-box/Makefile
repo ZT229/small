@@ -96,7 +96,7 @@ define Package/$(PKG_NAME)/config
 
     config SING_BOX_WITH_V2RAY_API
       bool "Build with V2Ray API support (EXPERIMENTAL!!!)"
-      default y
+      default n
 
     config SING_BOX_WITH_WIREGUARD
       bool "Build with WireGuard support"
